@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: fso
+      PGUSER: postgres
+    volumes:
+      - ./db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d fso -U username"]
+      interval: 10s
+      timeout: 3s
+      retries: 2
+  api:
+    image: blogs-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/usr/src/api
+    ports:
+      - 3001:3001
+    container_name: blogs-api
+    environment:
+      - DATABASE_URL=postgres://username:password@db:5432/fso
+      - SECRET=fso-databases
+    depends_on:
+      db:
+        condition: service_healthy
